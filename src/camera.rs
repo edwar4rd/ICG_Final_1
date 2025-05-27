@@ -4,6 +4,7 @@ use crate::{
     hittable::Hittable,
 };
 use log::info;
+use rand::Rng;
 use std::io::stdout;
 
 #[derive(Debug, Clone)]
@@ -15,6 +16,8 @@ pub struct Camera {
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     pixel00_loc: Point3,
+    samples_per_pixel: usize,
+    pixel_samples_scale: f64,
 }
 
 impl Camera {
@@ -24,6 +27,7 @@ impl Camera {
         image_aspect_ratio: f64,
         viewport_height: f64,
         camera_center: Point3,
+        samples_per_pixel: usize,
     ) -> Self {
         let image_height = (image_width as f64 / image_aspect_ratio).max(1.0) as usize;
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
@@ -34,6 +38,7 @@ impl Camera {
         let viewport_upper_left =
             camera_center - Vec3::new(0., 0., focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+        let pixel_samples_scale = (samples_per_pixel as f64).recip();
 
         Camera {
             image_width,
@@ -43,6 +48,8 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             pixel00_loc,
+            samples_per_pixel,
+            pixel_samples_scale,
         }
     }
 
@@ -56,18 +63,31 @@ impl Camera {
         for y in 0..self.image_height {
             info!("Scanlines remaining: {}", self.image_height - y);
             for x in 0..self.image_width {
-                let pixel_center = self.pixel00_loc
-                    + (x as f64 * self.pixel_delta_u)
-                    + (y as f64 * self.pixel_delta_v);
-                let pixel_dir = pixel_center - self.camera_center;
-                let ray = Ray::new(self.camera_center, pixel_dir);
-                let color = ray_color(&ray, world);
-
-                write_color(&mut stdout(), color)?;
+                let mut color = Color::zeros();
+                for _ in 0..self.samples_per_pixel {
+                    let ray = self.get_ray(x, y);
+                    color += ray_color(&ray, world);
+                }
+                write_color(&mut stdout(), color * self.pixel_samples_scale)?;
             }
         }
         info!("Done.");
         Ok(())
+    }
+}
+
+impl Camera {
+    fn get_ray(&self, x: usize, y: usize) -> Ray {
+        let (offset_x, offset_y) = (
+            rand::rng().random_range(-0.5..0.5),
+            rand::rng().random_range(-0.5..0.5),
+        );
+
+        let sample_center = self.pixel00_loc
+            + ((x as f64 + offset_x) * self.pixel_delta_u)
+            + ((y as f64 + offset_y) * self.pixel_delta_v);
+        let pixel_dir = sample_center - self.camera_center;
+        Ray::new(self.camera_center, pixel_dir)
     }
 }
 
