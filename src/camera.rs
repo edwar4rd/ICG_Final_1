@@ -81,15 +81,15 @@ impl Camera {
 
 fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> f64 {
     let oc = center - ray.origin();
-    let a = ray.direction().dot(&ray.direction());
-    let b = -2.0 * oc.dot(&ray.direction());
-    let c = oc.dot(&oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
+    let a = ray.direction().magnitude_squared();
+    let h = oc.dot(&ray.direction());
+    let c = oc.magnitude_squared() - radius * radius;
+    let discriminant = h * h - a * c;
 
     if discriminant < 0.0 {
         -1.0
     } else {
-        (-b - discriminant.sqrt()) / (2.0 * a)
+        (h - discriminant.sqrt()) / a
     }
 }
 
