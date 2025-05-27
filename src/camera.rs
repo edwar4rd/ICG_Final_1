@@ -1,6 +1,7 @@
 use crate::{
     Point3, Ray, Vec3,
     color::{Color, write_color},
+    hittable::Hittable,
 };
 use log::info;
 use std::io::stdout;
@@ -57,7 +58,11 @@ impl Camera {
         }
     }
 
-    pub fn render<T: std::io::Write>(&self, file: &mut T) -> std::io::Result<()> {
+    pub fn render<T: std::io::Write, W: Hittable>(
+        &self,
+        file: &mut T,
+        world: &W,
+    ) -> std::io::Result<()> {
         writeln!(file, "P3\n{} {}", self.image_width, self.image_height)?;
         println!("255");
         for y in 0..self.image_height {
@@ -68,7 +73,7 @@ impl Camera {
                     + (y as f64 * self.pixel_delta_v);
                 let pixel_dir = pixel_center - self.camera_center;
                 let ray = Ray::new(self.camera_center, pixel_dir);
-                let color = ray_color(&ray);
+                let color = ray_color(&ray, world);
 
                 write_color(&mut stdout(), color)?;
             }
@@ -78,12 +83,8 @@ impl Camera {
     }
 }
 
-fn ray_color(ray: &Ray) -> Color {
-    use crate::hittable::Hittable;
-    use crate::sphere::Sphere;
-    const SHPERE: Sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
-
-    if let Some(hit) = SHPERE.hit(ray, &(0.0..f64::INFINITY)) {
+fn ray_color<W: Hittable>(ray: &Ray, world: &W) -> Color {
+    if let Some(hit) = world.hit(ray, &(0.0..f64::INFINITY)) {
         let normal = hit.normal;
         0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
