@@ -4,3 +4,6 @@ pub type Point3 = Vec3;
 pub mod camera;
 pub mod color;
 pub mod ray;
+pub use ray::Ray;
+pub mod hittable;
+pub mod sphere;

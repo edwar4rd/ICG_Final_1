@@ -1,7 +1,6 @@
 use crate::{
-    Point3, Vec3,
+    Point3, Ray, Vec3,
     color::{Color, write_color},
-    ray::Ray,
 };
 use log::info;
 use std::io::stdout;
