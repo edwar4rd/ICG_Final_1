@@ -83,7 +83,7 @@ fn ray_color(ray: &Ray) -> Color {
     use crate::sphere::Sphere;
     const SHPERE: Sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
 
-    if let Some(hit) = SHPERE.hit(ray, 0.0..f64::INFINITY) {
+    if let Some(hit) = SHPERE.hit(ray, &(0.0..f64::INFINITY)) {
         let normal = hit.normal;
         0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {

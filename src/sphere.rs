@@ -18,7 +18,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_range: std::ops::Range<f64>) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t_range: &std::ops::Range<f64>) -> Option<HitRecord> {
         let oc = self.center - ray.origin();
         let a = ray.direction().magnitude_squared();
         let h = oc.dot(&ray.direction());

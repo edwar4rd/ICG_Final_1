@@ -29,5 +29,5 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray, t_range: Range<f64>) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray, t_range: &Range<f64>) -> Option<HitRecord>;
 }
