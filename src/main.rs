@@ -1,25 +1,95 @@
-use icg_final_1::color::{Color, write_color};
+use icg_final_1::{
+    Point3, Vec3,
+    color::{Color, write_color},
+    ray::Ray,
+};
 use log::info;
 use std::io::stdout;
 
-const IMAGE_WIDTH: usize = 256;
-const IMAGE_HEIGHT: usize = 256;
+fn ray_color(ray: &Ray) -> Color {
+    let color_a = Color::new(1.0, 1.0, 1.0);
+    let color_b = Color::new(0.5, 0.7, 1.0);
+    let unit_direction = ray.direction().normalize();
+    let t = 0.5 * (unit_direction.y + 1.0);
+    (1.0 - t) * color_a + t * color_b
+}
+
+#[derive(Debug, Clone)]
+struct Camera {
+    focal_length: f64,
+    image_width: usize,
+    image_height: usize,
+    image_aspect_ratio: f64,
+    viewport_height: f64,
+    viewport_width: f64,
+    camera_center: Point3,
+    viewport_u: Vec3,
+    viewport_v: Vec3,
+    pixel_delta_u: Vec3,
+    pixel_delta_v: Vec3,
+    viewport_upper_left: Point3,
+    pixel00_loc: Point3,
+}
+
+impl Camera {
+    fn new(
+        focal_length: f64,
+        image_width: usize,
+        image_aspect_ratio: f64,
+        viewport_height: f64,
+        camera_center: Point3,
+    ) -> Self {
+        let image_height = (image_width as f64 / image_aspect_ratio).max(1.0) as usize;
+        let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
+        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+        let pixel_delta_u = viewport_u / (image_width as f64);
+        let pixel_delta_v = viewport_v / (image_height as f64);
+        let viewport_upper_left =
+            camera_center - Vec3::new(0., 0., focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+        Camera {
+            focal_length,
+            image_width,
+            image_height,
+            image_aspect_ratio,
+            viewport_height,
+            viewport_width,
+            camera_center,
+            viewport_u,
+            viewport_v,
+            pixel_delta_u,
+            pixel_delta_v,
+            viewport_upper_left,
+            pixel00_loc,
+        }
+    }
+
+    fn render<T: std::io::Write>(&self, file: &mut T) -> std::io::Result<()> {
+        writeln!(file, "P3\n{} {}", self.image_width, self.image_height)?;
+        println!("255");
+        for y in 0..self.image_height {
+            info!("Scanlines remaining: {}", self.image_height - y);
+            for x in 0..self.image_width {
+                let pixel_center = self.pixel00_loc
+                    + (x as f64 * self.pixel_delta_u)
+                    + (y as f64 * self.pixel_delta_v);
+                let pixel_dir = pixel_center - self.camera_center;
+                let ray = Ray::new(self.camera_center, pixel_dir);
+                let color = ray_color(&ray);
+
+                write_color(&mut stdout(), color)?;
+            }
+        }
+        info!("Done.");
+        Ok(())
+    }
+}
 
 fn main() {
     env_logger::init();
-
-    println!("P3\n{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
-    println!("255");
-    for y in 0..IMAGE_HEIGHT {
-        info!("Scanlines remaining: {}", IMAGE_HEIGHT - y);
-        for x in 0..IMAGE_WIDTH {
-            let color = Color::new(
-                x as f64 / (IMAGE_WIDTH - 1) as f64,
-                y as f64 / (IMAGE_HEIGHT - 1) as f64,
-                0.0,
-            );
-            write_color(&mut stdout(), color).unwrap();
-        }
-    }
-    info!("Done.");
+    Camera::new(1.0, 400, 16.0 / 9.0, 2.0, Point3::new(0.0, 0.0, 0.0))
+        .render(&mut stdout())
+        .unwrap();
 }
