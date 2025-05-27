@@ -78,31 +78,19 @@ impl Camera {
     }
 }
 
-fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> f64 {
-    let oc = center - ray.origin();
-    let a = ray.direction().magnitude_squared();
-    let h = oc.dot(&ray.direction());
-    let c = oc.magnitude_squared() - radius * radius;
-    let discriminant = h * h - a * c;
-
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (h - discriminant.sqrt()) / a
-    }
-}
-
 fn ray_color(ray: &Ray) -> Color {
-    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, ray);
-    if t > 0.0 {
-        // Hit the sphere
-        let normal = (ray.at(t) - Point3::new(0.0, 0.0, -1.0)).normalize();
-        return 0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0);
-    }
+    use crate::hittable::Hittable;
+    use crate::sphere::Sphere;
+    const SHPERE: Sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
 
-    let color_a = Color::new(1.0, 1.0, 1.0);
-    let color_b = Color::new(0.5, 0.7, 1.0);
-    let unit_direction = ray.direction().normalize();
-    let tt = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - tt) * color_a + tt * color_b
+    if let Some(hit) = SHPERE.hit(ray, 0.0..f64::INFINITY) {
+        let normal = hit.normal;
+        0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
+    } else {
+        let color_a = Color::new(1.0, 1.0, 1.0);
+        let color_b = Color::new(0.5, 0.7, 1.0);
+        let unit_direction = ray.direction().normalize();
+        let tt = 0.5 * (unit_direction.y + 1.0);
+        (1.0 - tt) * color_a + tt * color_b
+    }
 }

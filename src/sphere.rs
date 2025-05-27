@@ -9,7 +9,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Self {
+    pub const fn new(center: Point3, radius: f64) -> Self {
         Sphere {
             center,
             radius: radius.max(0.0),
@@ -39,10 +39,10 @@ impl Hittable for Sphere {
             }
         }
 
-        return Some(HitRecord {
+        Some(HitRecord {
             t: root,
             p: ray.at(root),
             normal: (ray.at(root) - self.center) / self.radius,
-        });
+        })
     }
 }
