@@ -8,18 +8,12 @@ use std::io::stdout;
 
 #[derive(Debug, Clone)]
 pub struct Camera {
-    // focal_length: f64,
     image_width: usize,
     image_height: usize,
     // image_aspect_ratio: f64,
-    // viewport_height: f64,
-    // viewport_width: f64,
     camera_center: Point3,
-    // viewport_u: Vec3,
-    // viewport_v: Vec3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
-    // viewport_upper_left: Point3,
     pixel00_loc: Point3,
 }
 
@@ -42,18 +36,12 @@ impl Camera {
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         Camera {
-            // focal_length,
             image_width,
             image_height,
             // image_aspect_ratio,
-            // viewport_height,
-            // viewport_width,
             camera_center,
-            // viewport_u,
-            // viewport_v,
             pixel_delta_u,
             pixel_delta_v,
-            // viewport_upper_left,
             pixel00_loc,
         }
     }
