@@ -29,6 +29,21 @@ pub fn random_unit_vec3() -> Vec3 {
     }
 }
 
+pub fn random_vec3_in_unit_disk() -> Vec3 {
+    use rand::Rng;
+
+    loop {
+        let v = Vec3::new(
+            rand::rng().random_range(-1.0..=1.0),
+            rand::rng().random_range(-1.0..=1.0),
+            0.0,
+        );
+        if v.norm_squared() <= 1.0 {
+            break v;
+        }
+    }
+}
+
 pub fn random_vec3_on_hemisphere(normal: Vec3) -> Vec3 {
     let v = random_unit_vec3();
     if v.dot(&normal) > 0.0 { v } else { -v }

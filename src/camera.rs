@@ -2,10 +2,33 @@ use crate::{
     Point3, Ray, Vec3,
     color::{Color, write_color},
     hittable::Hittable,
+    random_vec3_in_unit_disk,
 };
 use log::info;
 use rand::Rng;
 use std::io::stdout;
+
+#[derive(Debug, Clone, Copy)]
+pub struct ImageSettings {
+    pub image_width: usize,
+    pub aspect_ratio: f64,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct QualitySettings {
+    pub samples_per_pixel: usize,
+    pub max_depth: usize,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CameraSettings {
+    pub vfov: f64,
+    pub focus_dist: f64,
+    pub defocus_angle: f64,
+    pub camera_center: Point3,
+    pub camera_lookat: Point3,
+    pub camera_vup: Vec3,
+}
 
 #[derive(Debug, Clone)]
 pub struct Camera {
@@ -17,26 +40,26 @@ pub struct Camera {
     pixel00_loc: Point3,
     samples_per_pixel: usize,
     max_depth: usize,
+    defocus_angle: f64,
+    defocus_disk_u: Vec3,
+    defocus_disk_v: Vec3,
 }
 
 impl Camera {
     pub fn new(
-        image_width: usize,
-        image_aspect_ratio: f64,
-        samples_per_pixel: usize,
-        max_depth: usize,
-        vfov: f64,
-        camera_center: Point3,
-        camera_lookat: Point3,
-        camera_vup: Vec3,
+        image_settings: ImageSettings,
+        quality_settings: QualitySettings,
+        camera_settings: CameraSettings,
     ) -> Self {
-        let image_height = (image_width as f64 / image_aspect_ratio).max(1.0) as usize;
-        let focal_length = camera_center.metric_distance(&camera_lookat);
-        let viewport_height = 2.0 * (focal_length * (vfov.to_radians() / 2.0).tan());
+        let image_width = image_settings.image_width;
+        let aspect_ratio = image_settings.aspect_ratio;
+        let image_height = (image_width as f64 / aspect_ratio).max(1.0) as usize;
+        let viewport_height =
+            2.0 * (camera_settings.focus_dist * (camera_settings.vfov.to_radians() / 2.0).tan());
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
 
-        let w = (camera_center - camera_lookat).normalize();
-        let u = camera_vup.cross(&w).normalize();
+        let w = (camera_settings.camera_center - camera_settings.camera_lookat).normalize();
+        let u = camera_settings.camera_vup.cross(&w).normalize();
         let v = w.cross(&u);
 
         let viewport_u = viewport_width * u;
@@ -44,20 +67,29 @@ impl Camera {
 
         let pixel_delta_u = viewport_u / (image_width as f64);
         let pixel_delta_v = viewport_v / (image_height as f64);
-        let viewport_upper_left =
-            camera_center - focal_length * w - viewport_u / 2.0 - viewport_v / 2.0;
+        let viewport_upper_left = camera_settings.camera_center
+            - camera_settings.focus_dist * w
+            - viewport_u / 2.0
+            - viewport_v / 2.0;
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+        let defocus_radius =
+            (camera_settings.defocus_angle / 2.0).to_radians().tan() * camera_settings.focus_dist;
+        let defocus_disk_u = u * defocus_radius;
+        let defocus_disk_v = v * defocus_radius;
 
         Camera {
             image_width,
             image_height,
-            // image_aspect_ratio,
-            camera_center,
+            camera_center: camera_settings.camera_center,
             pixel_delta_u,
             pixel_delta_v,
             pixel00_loc,
-            samples_per_pixel,
-            max_depth,
+            samples_per_pixel: quality_settings.samples_per_pixel,
+            max_depth: quality_settings.max_depth,
+            defocus_angle: camera_settings.defocus_angle,
+            defocus_disk_u,
+            defocus_disk_v,
         }
     }
 
@@ -95,8 +127,14 @@ impl Camera {
         let sample_center = self.pixel00_loc
             + ((x as f64 + offset_x) * self.pixel_delta_u)
             + ((y as f64 + offset_y) * self.pixel_delta_v);
-        let pixel_dir = sample_center - self.camera_center;
-        Ray::new(self.camera_center, pixel_dir)
+        let origin = if self.defocus_angle != 0.0 {
+            let p = random_vec3_in_unit_disk();
+            self.camera_center + p.x * self.defocus_disk_u + p.y * self.defocus_disk_v
+        } else {
+            self.camera_center
+        };
+        let dir = sample_center - origin;
+        Ray::new(origin, dir)
     }
 }
 

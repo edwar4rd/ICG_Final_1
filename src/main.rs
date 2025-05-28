@@ -1,6 +1,6 @@
 use icg_final_1::{
     Point3,
-    camera::Camera,
+    camera::{Camera, CameraSettings, ImageSettings, QualitySettings},
     hittable::Hittable,
     hittable_list::HittableList,
     material::{Dielectric, Lambertian, Metal},
@@ -10,18 +10,26 @@ use std::{io::stdout, rc::Rc};
 
 fn main() {
     env_logger::init();
-    Camera::new(
-        400,
-        16.0 / 9.0,
-        100,
-        50,
-        20.0,
-        Point3::new(-2.0, 2.0, 1.0),
-        Point3::new(0.0, 0.0, -1.0),
-        Point3::new(0.0, 1.0, 0.0),
-    )
-    .render(&mut stdout(), &create_world())
-    .unwrap();
+    let image_settings = ImageSettings {
+        image_width: 400,
+        aspect_ratio: 16.0 / 9.0,
+    };
+    let quality_settings = QualitySettings {
+        samples_per_pixel: 100,
+        max_depth: 50,
+    };
+    let camera_settings = CameraSettings {
+        vfov: 20.0,
+        focus_dist: 3.4,
+        defocus_angle: 10.0,
+        camera_center: Point3::new(-2.0, 2.0, 1.0),
+        camera_lookat: Point3::new(0.0, 0.0, -1.0),
+        camera_vup: Point3::new(0.0, 1.0, 0.0),
+    };
+
+    Camera::new(image_settings, quality_settings, camera_settings)
+        .render(&mut stdout(), &create_world())
+        .unwrap();
 }
 
 fn create_world() -> impl Hittable {
