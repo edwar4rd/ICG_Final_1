@@ -18,14 +18,14 @@ fn main() {
         aspect_ratio: 16.0 / 9.0,
     };
     let quality_settings = QualitySettings {
-        samples_per_pixel: 500,
-        max_depth: 50,
+        samples_per_pixel: 10,
+        max_depth: 400,
     };
     let camera_settings = CameraSettings {
         vfov: 20.0,
         focus_dist: 10.0,
         defocus_angle: 0.6,
-        camera_center: Point3::new(13.0, 2.0, 3.0),
+        camera_center: Point3::new(15.0, 2.0, 3.0),
         camera_lookat: Point3::new(0.0, 0.0, 0.0),
         camera_vup: Point3::new(0.0, 1.0, 0.0),
     };
@@ -119,5 +119,28 @@ fn create_world(rng: &mut impl rand::Rng) -> impl Hittable {
         Rc::new(portal_right_material),
     ));
 
+    add_blackhole(Point3::new(8.0, 1.0, 0.0), &mut world);
+
     world
+}
+
+fn add_blackhole(position: Point3, world: &mut HittableList) {
+    use icg_final_1::material::Black;
+    const LAYER_COUNT: usize = 32;
+
+    for layer_index in 0..LAYER_COUNT {
+        let radius = (layer_index as f64 / (LAYER_COUNT as f64 / 4.25)).powf(2.5) + 1.0;
+        let layer_weight = 1.0;
+        let ior = ((radius - 1.4).powf(-0.5) / (LAYER_COUNT as f64) * layer_weight * 2.8)
+            .powf(1.74)
+            * 22.0
+            + 1.0;
+        world.push(Sphere::new(
+            position,
+            radius / 40.0,
+            Rc::new(Dielectric::new(ior)),
+        ));
+    }
+
+    world.push(Sphere::new(position, 0.01, Rc::new(Black::new())));
 }
