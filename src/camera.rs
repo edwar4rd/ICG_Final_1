@@ -26,12 +26,13 @@ impl Camera {
         focal_length: f64,
         image_width: usize,
         image_aspect_ratio: f64,
-        viewport_height: f64,
         camera_center: Point3,
         samples_per_pixel: usize,
         max_depth: usize,
+        vfov: f64,
     ) -> Self {
         let image_height = (image_width as f64 / image_aspect_ratio).max(1.0) as usize;
+        let viewport_height = 2.0 * (focal_length * (vfov.to_radians() / 2.0).tan());
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
         let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
         let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
