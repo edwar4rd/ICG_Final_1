@@ -155,3 +155,18 @@ impl Material for Portal {
         Some((self.albedo, scattered))
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct Black;
+
+impl Black {
+    pub fn new() -> Self {
+        Black {}
+    }
+}
+
+impl Material for Black {
+    fn scatter(&self, _ray_in: &Ray, _hit_record: &HitRecord) -> Option<(Color, Ray)> {
+        None
+    }
+}
