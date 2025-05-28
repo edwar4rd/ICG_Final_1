@@ -9,7 +9,12 @@ This repository contains an implementation of a simple ray tracer in Rust, follo
 - Basic path tracing engine
 - Sphere and only spheres
 - Diffuse and reflective materials
+
+## My Custom Features
+
 - Parallel rendering with Rayon (`--features rayon`)
+- Output to png with the Image crate (`--features image`)
+- "Portal" material that teleports the ray
 
 ## Getting Started
 
@@ -20,15 +25,15 @@ This repository contains an implementation of a simple ray tracer in Rust, follo
 
 ### Build & Run
 
-Use the `--release` flag (and probably also lower the sample count per pixel) or you'll wait ages.
+Use the `--release` flag (and maybe also lower the sample count per pixel) or you'll wait ages.
 
 ```bash
 git clone https://github.com/edwar4rd/ICG_Final_1
 cd ICG_Final_1
-cargo run --release > image.ppm
+cargo run --release
 ```
 
-The output image will be saved as `image.ppm`.
+The output image will be saved as `image.png`.
 Use something like `ffmpeg` to turn that to something more portable.
 
 ## Credits
