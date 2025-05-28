@@ -5,9 +5,17 @@ use std::io::stdout;
 
 fn main() {
     env_logger::init();
-    Camera::new(1.0, 400, 16.0 / 9.0, 2.0, Point3::new(0.0, 0.0, 0.0), 20)
-        .render(&mut stdout(), &create_world())
-        .unwrap();
+    Camera::new(
+        1.0,
+        400,
+        16.0 / 9.0,
+        2.0,
+        Point3::new(0.0, 0.0, 0.0),
+        100,
+        50,
+    )
+    .render(&mut stdout(), &create_world())
+    .unwrap();
 }
 
 fn create_world() -> impl Hittable {

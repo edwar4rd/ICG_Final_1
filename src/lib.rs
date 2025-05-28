@@ -1,6 +1,39 @@
 pub type Vec3 = nalgebra::Vector3<f64>;
 pub type Point3 = Vec3;
 
+pub fn random_vec3() -> Vec3 {
+    use rand::Rng;
+    Vec3::new(
+        rand::rng().random_range(0.0..1.),
+        rand::rng().random_range(0.0..1.),
+        rand::rng().random_range(0.0..1.),
+    )
+}
+
+pub fn random_vec3_in<R: rand::distr::uniform::SampleRange<f64> + Clone>(range: R) -> Vec3 {
+    use rand::Rng;
+    Vec3::new(
+        rand::rng().random_range(range.clone()),
+        rand::rng().random_range(range.clone()),
+        rand::rng().random_range(range.clone()),
+    )
+}
+
+pub fn random_unit_vec3() -> Vec3 {
+    loop {
+        let v = random_vec3_in(-1.0..=1.0);
+        let v_squared = v.norm_squared();
+        if 1e-160 < v_squared && v_squared <= 1.0 {
+            break v.normalize();
+        }
+    }
+}
+
+pub fn random_vec3_on_hemisphere(normal: Vec3) -> Vec3 {
+    let v = random_unit_vec3();
+    if v.dot(&normal) > 0.0 { v } else { -v }
+}
+
 pub mod camera;
 pub mod color;
 pub mod ray;

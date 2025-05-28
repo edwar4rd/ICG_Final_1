@@ -2,6 +2,7 @@ use crate::{
     Point3, Ray, Vec3,
     color::{Color, write_color},
     hittable::Hittable,
+    random_vec3_on_hemisphere,
 };
 use log::info;
 use rand::Rng;
@@ -18,6 +19,7 @@ pub struct Camera {
     pixel00_loc: Point3,
     samples_per_pixel: usize,
     pixel_samples_scale: f64,
+    max_depth: usize,
 }
 
 impl Camera {
@@ -28,6 +30,7 @@ impl Camera {
         viewport_height: f64,
         camera_center: Point3,
         samples_per_pixel: usize,
+        max_depth: usize,
     ) -> Self {
         let image_height = (image_width as f64 / image_aspect_ratio).max(1.0) as usize;
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
@@ -50,6 +53,7 @@ impl Camera {
             pixel00_loc,
             samples_per_pixel,
             pixel_samples_scale,
+            max_depth,
         }
     }
 
@@ -66,7 +70,7 @@ impl Camera {
                 let mut color = Color::zeros();
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(x, y);
-                    color += ray_color(&ray, world);
+                    color += ray_color(&ray, world, self.max_depth);
                 }
                 write_color(&mut stdout(), color * self.pixel_samples_scale)?;
             }
@@ -91,10 +95,19 @@ impl Camera {
     }
 }
 
-fn ray_color<W: Hittable>(ray: &Ray, world: &W) -> Color {
-    if let Some(hit) = world.hit(ray, &(0.0..f64::INFINITY)) {
-        let normal = hit.normal;
-        0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
+fn ray_color<W: Hittable>(ray: &Ray, world: &W, depth: usize) -> Color {
+    if depth == 0 {
+        return Color::zeros();
+    }
+
+    if let Some(hit) = world.hit(ray, &(0.001..f64::INFINITY)) {
+        // let normal = hit.normal;
+        // 0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
+        0.5 * ray_color(
+            &Ray::new(hit.p, random_vec3_on_hemisphere(hit.normal)),
+            world,
+            depth - 1,
+        )
     } else {
         let color_a = Color::new(1.0, 1.0, 1.0);
         let color_b = Color::new(0.5, 0.7, 1.0);
