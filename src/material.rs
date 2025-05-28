@@ -178,8 +178,10 @@ pub struct BlackHoleLayer {
 
 impl BlackHoleLayer {
     pub fn new(radius: f64, layer_count: f64) -> Self {
+        let pre_mult = (radius - 1.4).max(0.0001).powf(-0.5) / layer_count * 2.8;
+        debug_assert!(pre_mult.is_finite(), "Invalid pre_mult value: {}, from r = {}, layer_count = {}", pre_mult, radius, layer_count);
         BlackHoleLayer {
-            pre_mult: (radius - 1.4).powf(-0.5) / layer_count * 2.8,
+            pre_mult
         }
     }
 }
@@ -226,6 +228,10 @@ impl Material for BlackHoleLayer {
         };
 
         let scattered = Ray::new(hit_record.p, direction);
+        debug_assert!(direction.x.is_finite());
+        debug_assert!(direction.y.is_finite());
+        debug_assert!(direction.z.is_finite());
+        
         Some((Color::new(1.0, 1.0, 1.0), scattered))
     }
 }

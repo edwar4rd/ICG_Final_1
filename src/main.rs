@@ -120,7 +120,7 @@ fn create_world(rng: &mut impl rand::Rng) -> impl Hittable {
 
 fn add_blackhole(position: Point3, world: &mut HittableList) {
     use icg_final_1::material::{Black, BlackHoleLayer};
-    const LAYER_COUNT: usize = 32;
+    const LAYER_COUNT: usize = 64;
 
     for layer_index in 0..LAYER_COUNT {
         let radius = (layer_index as f64 / (LAYER_COUNT as f64 / 4.25)).powf(2.5) + 1.0;

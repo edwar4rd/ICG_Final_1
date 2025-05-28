@@ -144,7 +144,10 @@ impl Camera {
             let color: Color = sample_iter
                 .map(|_| {
                     let ray = self.get_ray(x as usize, y as usize);
-                    ray_color(&ray, world, self.max_depth)
+                    let color = ray_color(&ray, world, self.max_depth);
+                    debug_assert!(color.x >= 0.0 && color.y >= 0.0 && color.z >= 0.0);
+                    let color = Color::new(color.x.max(0.0), color.y.max(0.0), color.z.max(0.0));
+                    color
                 })
                 .sum();
             let (r, g, b) = crate::color::color_to_rgb(color * pixel_samples_scale);
