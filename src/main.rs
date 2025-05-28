@@ -27,10 +27,16 @@ fn main() {
         camera_vup: Point3::new(0.0, 1.0, 0.0),
     };
 
-    Camera::new(image_settings, quality_settings, camera_settings)
-        // .render(&mut std::io::stdout(), &create_world())
+    let camera = Camera::new(image_settings, quality_settings, camera_settings);
+    #[cfg(feature = "image")]
+    camera
         .render_to_imgbuf(&create_world())
         .save("image.png")
+        .unwrap();
+
+    #[cfg(not(feature = "image"))]
+    camera
+        .render(&mut std::io::stdout(), &create_world())
         .unwrap();
 }
 

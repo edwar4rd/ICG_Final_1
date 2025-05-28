@@ -124,6 +124,7 @@ impl Camera {
         Ok(())
     }
 
+    #[cfg(feature = "image")]
     pub fn render_to_imgbuf<W: Hittable>(
         &self,
         world: &W,
