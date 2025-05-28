@@ -132,24 +132,23 @@ impl Camera {
         use rayon::prelude::*;
         let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
         let mut imgbuf = image::ImageBuffer::new(self.image_width as u32, self.image_height as u32);
-        for (y, row) in imgbuf.enumerate_rows_mut() {
-            info!("Scanlines remaining: {}", self.image_height - y as usize);
-            for (x, _, pixel) in row {
-                #[cfg(feature = "rayon")]
-                let sample_iter = (0..self.samples_per_pixel).into_par_iter();
-                #[cfg(not(feature = "rayon"))]
-                let sample_iter = 0..self.samples_per_pixel;
+        #[cfg(feature = "rayon")]
+        let pixel_iter = imgbuf.par_enumerate_pixels_mut();
+        #[cfg(not(feature = "rayon"))]
+        let pixel_iter = imgbuf.enumerate_pixels_mut();
 
-                let color: Color = sample_iter
-                    .map(|_| {
-                        let ray = self.get_ray(x as usize, y as usize);
-                        ray_color(&ray, world, self.max_depth)
-                    })
-                    .sum();
-                let (r, g, b) = crate::color::color_to_rgb(color * pixel_samples_scale);
-                *pixel = image::Rgb([r, g, b]);
-            }
-        }
+        pixel_iter.for_each(|(x, y, pixel)| {
+            let sample_iter = 0..self.samples_per_pixel;
+
+            let color: Color = sample_iter
+                .map(|_| {
+                    let ray = self.get_ray(x as usize, y as usize);
+                    ray_color(&ray, world, self.max_depth)
+                })
+                .sum();
+            let (r, g, b) = crate::color::color_to_rgb(color * pixel_samples_scale);
+            *pixel = image::Rgb([r, g, b]);
+        });
         info!("Done.");
         imgbuf
     }
