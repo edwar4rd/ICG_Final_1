@@ -1,4 +1,4 @@
-use crate::{Ray, color::Color, hittable::HitRecord, near_zero, refract};
+use crate::{Ray, color::Color, hittable::HitRecord, near_zero, reflect, refract};
 
 pub trait Material: std::fmt::Debug {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)>;
@@ -63,9 +63,7 @@ pub struct Dielectric {
 
 impl Dielectric {
     pub fn new(refraction_index: f64) -> Self {
-        Dielectric {
-            refraction_index: refraction_index.max(1.0),
-        }
+        Dielectric { refraction_index }
     }
 }
 
@@ -79,8 +77,17 @@ impl Material for Dielectric {
         };
 
         let unit_direction = ray_in.direction().normalize();
-        let refracted = refract(&unit_direction, &hit_record.normal, ri);
-        let scattered = Ray::new(hit_record.p, refracted);
+
+        let cos_theta = -unit_direction.dot(&hit_record.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+        let cannot_refract = ri * sin_theta > 1.0;
+        let direction = if cannot_refract {
+            reflect(&unit_direction, &hit_record.normal)
+        } else {
+            refract(&unit_direction, &hit_record.normal, ri)
+        };
+
+        let scattered = Ray::new(hit_record.p, direction);
         Some((Color::new(1.0, 1.0, 1.0), scattered))
     }
 }
