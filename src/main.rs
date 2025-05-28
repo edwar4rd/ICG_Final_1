@@ -1,11 +1,5 @@
 use icg_final_1::{
-    Point3, Rc,
-    camera::{Camera, CameraSettings, ImageSettings, QualitySettings},
-    color::Color,
-    hittable::Hittable,
-    hittable_list::HittableList,
-    material::{Dielectric, Lambertian, Metal},
-    sphere::Sphere,
+    camera::{Camera, CameraSettings, ImageSettings, QualitySettings}, color::Color, hittable::Hittable, hittable_list::HittableList, material::{Dielectric, Lambertian, Metal}, sphere::Sphere, Point3, Rc
 };
 
 fn main() {
@@ -18,7 +12,7 @@ fn main() {
         aspect_ratio: 16.0 / 9.0,
     };
     let quality_settings = QualitySettings {
-        samples_per_pixel: 10,
+        samples_per_pixel: 500,
         max_depth: 400,
     };
     let camera_settings = CameraSettings {
@@ -125,20 +119,15 @@ fn create_world(rng: &mut impl rand::Rng) -> impl Hittable {
 }
 
 fn add_blackhole(position: Point3, world: &mut HittableList) {
-    use icg_final_1::material::Black;
+    use icg_final_1::material::{Black, BlackHoleLayer};
     const LAYER_COUNT: usize = 32;
 
     for layer_index in 0..LAYER_COUNT {
         let radius = (layer_index as f64 / (LAYER_COUNT as f64 / 4.25)).powf(2.5) + 1.0;
-        let layer_weight = 1.0;
-        let ior = ((radius - 1.4).powf(-0.5) / (LAYER_COUNT as f64) * layer_weight * 2.8)
-            .powf(1.74)
-            * 22.0
-            + 1.0;
         world.push(Sphere::new(
             position,
             radius / 40.0,
-            Rc::new(Dielectric::new(ior)),
+            Rc::new(BlackHoleLayer::new(radius, LAYER_COUNT as f64)),
         ));
     }
 

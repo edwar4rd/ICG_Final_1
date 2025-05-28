@@ -170,3 +170,62 @@ impl Material for Black {
         None
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct BlackHoleLayer {
+    pre_mult: f64,
+}
+
+impl BlackHoleLayer {
+    pub fn new(radius: f64, layer_count: f64) -> Self {
+        BlackHoleLayer {
+            pre_mult: (radius - 1.4).powf(-0.5) / layer_count * 2.8,
+        }
+    }
+}
+
+impl Material for BlackHoleLayer {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
+        let layer_weight = {
+            let wi = ray_in.direction().normalize();
+            let f = wi.dot(&hit_record.normal).abs();
+            let blend = 0.9f64;
+
+            let f = if blend != 0.5 {
+                let blend = blend.clamp(0.0, 1.0 - 1e-5);
+                let blend = if blend < 0.5 {
+                    2.0 * blend
+                } else {
+                    0.5 / (1.0 - blend)
+                };
+
+                f.powf(blend)
+            } else {
+                f
+            };
+
+            let f = 1.0 - f;
+            if f > 0.91 {
+                1.0 - (f - 0.91) / 0.09
+            } else {
+                1.0
+            }
+        };
+        let ri = (self.pre_mult * layer_weight).powf(1.74) * 22.0 + 1.0;
+        let ri = if hit_record.front_face { 1.0 / ri } else { ri };
+
+        let unit_direction = ray_in.direction().normalize();
+
+        let cos_theta = -unit_direction.dot(&hit_record.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+        let cannot_refract = ri * sin_theta > 1.0;
+        let direction = if cannot_refract {
+            reflect(&unit_direction, &hit_record.normal)
+        } else {
+            refract(&unit_direction, &hit_record.normal, ri)
+        };
+
+        let scattered = Ray::new(hit_record.p, direction);
+        Some((Color::new(1.0, 1.0, 1.0), scattered))
+    }
+}
