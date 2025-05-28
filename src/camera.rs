@@ -2,7 +2,7 @@ use crate::{
     Point3, Ray, Vec3,
     color::{Color, write_color},
     hittable::Hittable,
-    random_vec3_on_hemisphere,
+    random_unit_vec3,
 };
 use log::info;
 use rand::Rng;
@@ -104,7 +104,7 @@ fn ray_color<W: Hittable>(ray: &Ray, world: &W, depth: usize) -> Color {
         // let normal = hit.normal;
         // 0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
         0.5 * ray_color(
-            &Ray::new(hit.p, random_vec3_on_hemisphere(hit.normal)),
+            &Ray::new(hit.p, random_unit_vec3() + hit.normal),
             world,
             depth - 1,
         )
