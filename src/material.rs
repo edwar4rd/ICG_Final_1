@@ -1,3 +1,5 @@
+use rand::random;
+
 use crate::{Ray, color::Color, hittable::HitRecord, near_zero, reflect, refract};
 
 pub trait Material: std::fmt::Debug {
@@ -69,7 +71,6 @@ impl Dielectric {
 
 impl Material for Dielectric {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
-        let reflected_dir = crate::reflect(&ray_in.direction(), &hit_record.normal).normalize();
         let ri = if hit_record.front_face {
             1.0 / self.refraction_index
         } else {
@@ -81,7 +82,7 @@ impl Material for Dielectric {
         let cos_theta = -unit_direction.dot(&hit_record.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let cannot_refract = ri * sin_theta > 1.0;
-        let direction = if cannot_refract {
+        let direction = if cannot_refract || reflectance(cos_theta, ri) > random() {
             reflect(&unit_direction, &hit_record.normal)
         } else {
             refract(&unit_direction, &hit_record.normal, ri)
@@ -90,4 +91,10 @@ impl Material for Dielectric {
         let scattered = Ray::new(hit_record.p, direction);
         Some((Color::new(1.0, 1.0, 1.0), scattered))
     }
+}
+
+fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+    // Use Schlick's approximation for reflectance.
+    let r0 = ((1.0 - refraction_index) / (1.0 + refraction_index)).powi(2);
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
