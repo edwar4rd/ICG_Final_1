@@ -1,6 +1,7 @@
 use icg_final_1::{
     Point3, Rc,
     camera::{Camera, CameraSettings, ImageSettings, QualitySettings},
+    color::Color,
     hittable::Hittable,
     hittable_list::HittableList,
     material::{Dielectric, Lambertian, Metal},
@@ -35,7 +36,7 @@ fn main() {
 fn create_world() -> impl Hittable {
     let mut world = HittableList::new();
 
-    let ground_material = Lambertian::new(Point3::new(0.5, 0.5, 0.5));
+    let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
     world.push(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -54,7 +55,7 @@ fn create_world() -> impl Hittable {
             if (center - Point3::new(4.0, 0.2, 0.0)).magnitude() > 0.9 {
                 if choose_material < 0.8 {
                     // diffuse
-                    let albedo = Point3::new(
+                    let albedo = Color::new(
                         rand::random::<f64>() * rand::random::<f64>(),
                         rand::random::<f64>() * rand::random::<f64>(),
                         rand::random::<f64>() * rand::random::<f64>(),
@@ -62,7 +63,7 @@ fn create_world() -> impl Hittable {
                     world.push(Sphere::new(center, 0.2, Rc::new(Lambertian::new(albedo))));
                 } else if choose_material < 0.95 {
                     // metal
-                    let albedo = Point3::new(
+                    let albedo = Color::new(
                         0.5 * (1.0 + rand::random::<f64>()),
                         0.5 * (1.0 + rand::random::<f64>()),
                         0.5 * (1.0 + rand::random::<f64>()),
@@ -86,13 +87,13 @@ fn create_world() -> impl Hittable {
     world.push(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
-        Rc::new(Lambertian::new(Point3::new(0.4, 0.2, 0.1))),
+        Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1))),
     ));
 
     world.push(Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
-        Rc::new(Metal::new(Point3::new(0.7, 0.6, 0.5), 0.0)),
+        Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0)),
     ));
 
     world
