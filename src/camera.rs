@@ -2,7 +2,6 @@ use crate::{
     Point3, Ray, Vec3,
     color::{Color, write_color},
     hittable::Hittable,
-    random_unit_vec3,
 };
 use log::info;
 use rand::Rng;
@@ -101,13 +100,11 @@ fn ray_color<W: Hittable>(ray: &Ray, world: &W, depth: usize) -> Color {
     }
 
     if let Some(hit) = world.hit(ray, &(0.001..f64::INFINITY)) {
-        // let normal = hit.normal;
-        // 0.5 * Color::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
-        0.5 * ray_color(
-            &Ray::new(hit.p, random_unit_vec3() + hit.normal),
-            world,
-            depth - 1,
-        )
+        if let Some((attenuation, scattered)) = hit.mat.scatter(ray, &hit) {
+            attenuation.component_mul(&ray_color(&scattered, world, depth - 1))
+        } else {
+            Color::zeros()
+        }
     } else {
         let color_a = Color::new(1.0, 1.0, 1.0);
         let color_b = Color::new(0.5, 0.7, 1.0);

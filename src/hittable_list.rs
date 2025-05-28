@@ -39,8 +39,8 @@ impl Hittable for HittableList {
 
         for object in &self.objects {
             if let Some(new_hit) = object.hit(ray, &t_range) {
-                hit = Some(new_hit);
                 t_range.end = new_hit.t;
+                hit = Some(new_hit);
             }
         }
 

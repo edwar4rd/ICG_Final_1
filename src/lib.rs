@@ -34,10 +34,20 @@ pub fn random_vec3_on_hemisphere(normal: Vec3) -> Vec3 {
     if v.dot(&normal) > 0.0 { v } else { -v }
 }
 
+pub fn near_zero(v: &Vec3) -> bool {
+    let s = 1e-8;
+    v.x.abs() < s && v.y.abs() < s && v.z.abs() < s
+}
+
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    v - 2.0 * v.dot(n) * n
+}
+
 pub mod camera;
 pub mod color;
 pub mod ray;
 pub use ray::Ray;
 pub mod hittable;
 pub mod hittable_list;
+pub mod material;
 pub mod sphere;
