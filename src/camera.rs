@@ -11,37 +11,42 @@ use std::io::stdout;
 pub struct Camera {
     image_width: usize,
     image_height: usize,
-    // image_aspect_ratio: f64,
     camera_center: Point3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     pixel00_loc: Point3,
     samples_per_pixel: usize,
-    pixel_samples_scale: f64,
     max_depth: usize,
 }
 
 impl Camera {
     pub fn new(
-        focal_length: f64,
         image_width: usize,
         image_aspect_ratio: f64,
-        camera_center: Point3,
         samples_per_pixel: usize,
         max_depth: usize,
         vfov: f64,
+        camera_center: Point3,
+        camera_lookat: Point3,
+        camera_vup: Vec3,
     ) -> Self {
         let image_height = (image_width as f64 / image_aspect_ratio).max(1.0) as usize;
+        let focal_length = camera_center.metric_distance(&camera_lookat);
         let viewport_height = 2.0 * (focal_length * (vfov.to_radians() / 2.0).tan());
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
-        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+
+        let w = (camera_center - camera_lookat).normalize();
+        let u = camera_vup.cross(&w).normalize();
+        let v = w.cross(&u);
+
+        let viewport_u = viewport_width * u;
+        let viewport_v = -viewport_height * v;
+
         let pixel_delta_u = viewport_u / (image_width as f64);
         let pixel_delta_v = viewport_v / (image_height as f64);
         let viewport_upper_left =
-            camera_center - Vec3::new(0., 0., focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+            camera_center - focal_length * w - viewport_u / 2.0 - viewport_v / 2.0;
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-        let pixel_samples_scale = (samples_per_pixel as f64).recip();
 
         Camera {
             image_width,
@@ -52,7 +57,6 @@ impl Camera {
             pixel_delta_v,
             pixel00_loc,
             samples_per_pixel,
-            pixel_samples_scale,
             max_depth,
         }
     }
@@ -64,6 +68,7 @@ impl Camera {
     ) -> std::io::Result<()> {
         writeln!(file, "P3\n{} {}", self.image_width, self.image_height)?;
         println!("255");
+        let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
         for y in 0..self.image_height {
             info!("Scanlines remaining: {}", self.image_height - y);
             for x in 0..self.image_width {
@@ -72,7 +77,7 @@ impl Camera {
                     let ray = self.get_ray(x, y);
                     color += ray_color(&ray, world, self.max_depth);
                 }
-                write_color(&mut stdout(), color * self.pixel_samples_scale)?;
+                write_color(&mut stdout(), color * pixel_samples_scale)?;
             }
         }
         info!("Done.");
