@@ -7,7 +7,6 @@ use icg_final_1::{
     material::{Dielectric, Lambertian, Metal},
     sphere::Sphere,
 };
-use std::io::stdout;
 
 fn main() {
     env_logger::init();
@@ -29,7 +28,9 @@ fn main() {
     };
 
     Camera::new(image_settings, quality_settings, camera_settings)
-        .par_render(&mut stdout(), &create_world())
+        // .render(&mut std::io::stdout(), &create_world())
+        .render_to_imgbuf(&create_world())
+        .save("image.png")
         .unwrap();
 }
 

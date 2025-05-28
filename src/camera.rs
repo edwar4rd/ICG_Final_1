@@ -98,30 +98,7 @@ impl Camera {
         file: &mut T,
         world: &W,
     ) -> std::io::Result<()> {
-        let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
-        writeln!(file, "P3\n{} {}", self.image_width, self.image_height)?;
-        println!("255");
-        for y in 0..self.image_height {
-            info!("Scanlines remaining: {}", self.image_height - y);
-            for x in 0..self.image_width {
-                let mut color = Color::zeros();
-                for _ in 0..self.samples_per_pixel {
-                    let ray = self.get_ray(x, y);
-                    color += ray_color(&ray, world, self.max_depth);
-                }
-                write_color(&mut stdout(), color * pixel_samples_scale)?;
-            }
-        }
-        info!("Done.");
-        Ok(())
-    }
-
-    #[cfg(feature = "rayon")]
-    pub fn par_render<T: std::io::Write, W: Hittable>(
-        &self,
-        file: &mut T,
-        world: &W,
-    ) -> std::io::Result<()> {
+        #[cfg(feature = "rayon")]
         use rayon::prelude::*;
         let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
         writeln!(file, "P3\n{} {}", self.image_width, self.image_height)?;
@@ -129,8 +106,12 @@ impl Camera {
         for y in 0..self.image_height {
             info!("Scanlines remaining: {}", self.image_height - y);
             for x in 0..self.image_width {
-                let color: Color = (0..self.samples_per_pixel)
-                    .into_par_iter()
+                #[cfg(feature = "rayon")]
+                let sample_iter = (0..self.samples_per_pixel).into_par_iter();
+                #[cfg(not(feature = "rayon"))]
+                let sample_iter = 0..self.samples_per_pixel;
+
+                let color: Color = sample_iter
                     .map(|_| {
                         let ray = self.get_ray(x, y);
                         ray_color(&ray, world, self.max_depth)
@@ -143,18 +124,34 @@ impl Camera {
         Ok(())
     }
 
-    #[cfg(not(feature = "rayon"))]
-    pub fn par_render<T: std::io::Write, W: Hittable>(
+    pub fn render_to_imgbuf<W: Hittable>(
         &self,
-        file: &mut T,
         world: &W,
-    ) -> std::io::Result<()> {
-        use log::warn;
+    ) -> image::ImageBuffer<image::Rgb<u8>, Vec<u8>> {
+        #[cfg(feature = "rayon")]
+        use rayon::prelude::*;
+        let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
+        let mut imgbuf = image::ImageBuffer::new(self.image_width as u32, self.image_height as u32);
+        for (y, row) in imgbuf.enumerate_rows_mut() {
+            info!("Scanlines remaining: {}", self.image_height - y as usize);
+            for (x, _, pixel) in row {
+                #[cfg(feature = "rayon")]
+                let sample_iter = (0..self.samples_per_pixel).into_par_iter();
+                #[cfg(not(feature = "rayon"))]
+                let sample_iter = 0..self.samples_per_pixel;
 
-        warn!(
-            "Parallel rendering (feature `rayon`) is not enabled. Falling back to single-core..."
-        );
-        self.render(file, world)
+                let color: Color = sample_iter
+                    .map(|_| {
+                        let ray = self.get_ray(x as usize, y as usize);
+                        ray_color(&ray, world, self.max_depth)
+                    })
+                    .sum();
+                let (r, g, b) = crate::color::color_to_rgb(color * pixel_samples_scale);
+                *pixel = image::Rgb([r, g, b]);
+            }
+        }
+        info!("Done.");
+        imgbuf
     }
 }
 

@@ -20,3 +20,10 @@ pub fn write_color<T: std::io::Write>(file: &mut T, pixel_color: Color) -> std::
 
     writeln!(file, "{} {} {}", r, g, b)
 }
+
+pub fn color_to_rgb(color: Color) -> (u8, u8, u8) {
+    let r = (256.0 * linear_to_gamma(color.x).clamp(0.0, 0.999)) as u8;
+    let g = (256.0 * linear_to_gamma(color.y).clamp(0.0, 0.999)) as u8;
+    let b = (256.0 * linear_to_gamma(color.z).clamp(0.0, 0.999)) as u8;
+    (r, g, b)
+}
