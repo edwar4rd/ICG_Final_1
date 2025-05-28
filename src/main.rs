@@ -84,16 +84,29 @@ fn create_world() -> impl Hittable {
         Rc::new(Dielectric::new(1.5)),
     ));
 
+    let (portal_left_material, portal_right_material) = icg_final_1::material::Portal::new_pair(
+        Color::new(1.0, 0.5, 0.5),
+        Color::new(0.5, 0.5, 1.0),
+        Point3::new(-4.0, 1.0, 0.0),
+        Point3::new(4.0, 1.0, 0.0),
+    );
+
+    world.push(Sphere::new(
+        Point3::new(-8.0, 1.0, 0.0),
+        1.0,
+        Rc::new(Lambertian::new(Color::new(0.2, 0.8, 0.4))),
+    ));
+
     world.push(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
-        Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1))),
+        Rc::new(portal_left_material),
     ));
 
     world.push(Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
-        Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0)),
+        Rc::new(portal_right_material),
     ));
 
     world
