@@ -1,12 +1,12 @@
 use icg_final_1::{
     Point3, Rc,
     camera::{Camera, CameraSettings, ImageSettings, QualitySettings},
+    color::Color,
     hittable::Hittable,
     hittable_list::HittableList,
     material::{Dielectric, Lambertian, Metal},
     sphere::Sphere,
 };
-use std::io::stdout;
 
 fn main() {
     env_logger::init();
@@ -27,15 +27,23 @@ fn main() {
         camera_vup: Point3::new(0.0, 1.0, 0.0),
     };
 
-    Camera::new(image_settings, quality_settings, camera_settings)
-        .par_render(&mut stdout(), &create_world())
+    let camera = Camera::new(image_settings, quality_settings, camera_settings);
+    #[cfg(feature = "image")]
+    camera
+        .render_to_imgbuf(&create_world())
+        .save("image.png")
+        .unwrap();
+
+    #[cfg(not(feature = "image"))]
+    camera
+        .render(&mut std::io::stdout(), &create_world())
         .unwrap();
 }
 
 fn create_world() -> impl Hittable {
     let mut world = HittableList::new();
 
-    let ground_material = Lambertian::new(Point3::new(0.5, 0.5, 0.5));
+    let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
     world.push(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -54,7 +62,7 @@ fn create_world() -> impl Hittable {
             if (center - Point3::new(4.0, 0.2, 0.0)).magnitude() > 0.9 {
                 if choose_material < 0.8 {
                     // diffuse
-                    let albedo = Point3::new(
+                    let albedo = Color::new(
                         rand::random::<f64>() * rand::random::<f64>(),
                         rand::random::<f64>() * rand::random::<f64>(),
                         rand::random::<f64>() * rand::random::<f64>(),
@@ -62,7 +70,7 @@ fn create_world() -> impl Hittable {
                     world.push(Sphere::new(center, 0.2, Rc::new(Lambertian::new(albedo))));
                 } else if choose_material < 0.95 {
                     // metal
-                    let albedo = Point3::new(
+                    let albedo = Color::new(
                         0.5 * (1.0 + rand::random::<f64>()),
                         0.5 * (1.0 + rand::random::<f64>()),
                         0.5 * (1.0 + rand::random::<f64>()),
@@ -83,16 +91,29 @@ fn create_world() -> impl Hittable {
         Rc::new(Dielectric::new(1.5)),
     ));
 
+    let (portal_left_material, portal_right_material) = icg_final_1::material::Portal::new_pair(
+        Color::new(1.0, 0.5, 0.5),
+        Color::new(0.5, 0.5, 1.0),
+        Point3::new(-4.0, 1.0, 0.0),
+        Point3::new(4.0, 1.0, 0.0),
+    );
+
+    world.push(Sphere::new(
+        Point3::new(-8.0, 1.0, 0.0),
+        1.0,
+        Rc::new(Lambertian::new(Color::new(0.2, 0.8, 0.4))),
+    ));
+
     world.push(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
-        Rc::new(Lambertian::new(Point3::new(0.4, 0.2, 0.1))),
+        Rc::new(portal_left_material),
     ));
 
     world.push(Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
-        Rc::new(Metal::new(Point3::new(0.7, 0.6, 0.5), 0.0)),
+        Rc::new(portal_right_material),
     ));
 
     world

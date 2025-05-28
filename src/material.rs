@@ -104,3 +104,54 @@ fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
     let r0 = ((1.0 - refraction_index) / (1.0 + refraction_index)).powi(2);
     r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct Portal {
+    albedo: Color,
+    portal_position: crate::Point3,
+    target_position: crate::Point3,
+}
+
+impl Portal {
+    pub fn new(
+        albedo: Color,
+        portal_position: crate::Point3,
+        target_position: crate::Point3,
+    ) -> Self {
+        Portal {
+            albedo,
+            portal_position,
+            target_position,
+        }
+    }
+
+    pub fn new_pair(
+        albedo_a: Color,
+        albedo_b: Color,
+        pos_a: crate::Point3,
+        pos_b: crate::Point3,
+    ) -> (Self, Self) {
+        (
+            Portal::new(albedo_a, pos_a, pos_b),
+            Portal::new(albedo_b, pos_b, pos_a),
+        )
+    }
+}
+
+impl Material for Portal {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
+        if hit_record.front_face {
+            // The ray is entering the portal
+            return Some((
+                Color::new(1.0, 1.0, 1.0),
+                Ray::new(hit_record.p, ray_in.direction()),
+            ));
+        }
+
+        let scattered = Ray::new(
+            self.target_position + (hit_record.p - self.portal_position),
+            ray_in.direction(),
+        );
+        Some((self.albedo, scattered))
+    }
+}

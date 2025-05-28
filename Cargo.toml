@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 env_logger = "0.11.8"
+image = { version = "0.25.6", optional = true }
 log = "0.4.27"
 nalgebra = "0.33.2"
 rand = "0.9.1"
@@ -12,4 +13,5 @@ rayon = { version = "1.10.0", optional = true }
 
 [features]
 rayon = ["dep:rayon"]
-default = ["rayon"]
+image = ["dep:image"]
+default = ["rayon", "image"]
