@@ -9,7 +9,10 @@ use icg_final_1::{
 };
 
 fn main() {
+    use rand::SeedableRng;
     env_logger::init();
+    let mut rng = rand::rngs::StdRng::seed_from_u64(0);
+
     let image_settings = ImageSettings {
         image_width: 1200,
         aspect_ratio: 16.0 / 9.0,
@@ -30,7 +33,7 @@ fn main() {
     let camera = Camera::new(image_settings, quality_settings, camera_settings);
     #[cfg(feature = "image")]
     camera
-        .render_to_imgbuf(&create_world())
+        .render_to_imgbuf(&create_world(&mut rng))
         .save("image.png")
         .unwrap();
 
@@ -40,7 +43,7 @@ fn main() {
         .unwrap();
 }
 
-fn create_world() -> impl Hittable {
+fn create_world(rng: &mut impl rand::Rng) -> impl Hittable {
     let mut world = HittableList::new();
 
     let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
@@ -52,28 +55,28 @@ fn create_world() -> impl Hittable {
 
     for a in -11..11 {
         for b in -11..11 {
-            let choose_material = rand::random::<f64>();
+            let choose_material = rng.random::<f64>();
             let center = Point3::new(
-                a as f64 + 0.9 * rand::random::<f64>(),
+                a as f64 + 0.9 * rng.random::<f64>(),
                 0.2,
-                b as f64 + 0.9 * rand::random::<f64>(),
+                b as f64 + 0.9 * rng.random::<f64>(),
             );
 
             if (center - Point3::new(4.0, 0.2, 0.0)).magnitude() > 0.9 {
                 if choose_material < 0.8 {
                     // diffuse
                     let albedo = Color::new(
-                        rand::random::<f64>() * rand::random::<f64>(),
-                        rand::random::<f64>() * rand::random::<f64>(),
-                        rand::random::<f64>() * rand::random::<f64>(),
+                        rng.random::<f64>() * rng.random::<f64>(),
+                        rng.random::<f64>() * rng.random::<f64>(),
+                        rng.random::<f64>() * rng.random::<f64>(),
                     );
                     world.push(Sphere::new(center, 0.2, Rc::new(Lambertian::new(albedo))));
                 } else if choose_material < 0.95 {
                     // metal
                     let albedo = Color::new(
-                        0.5 * (1.0 + rand::random::<f64>()),
-                        0.5 * (1.0 + rand::random::<f64>()),
-                        0.5 * (1.0 + rand::random::<f64>()),
+                        0.5 * (1.0 + rng.random::<f64>()),
+                        0.5 * (1.0 + rng.random::<f64>()),
+                        0.5 * (1.0 + rng.random::<f64>()),
                     );
                     let fuzz = 0.5 * rand::random::<f64>();
                     world.push(Sphere::new(center, 0.2, Rc::new(Metal::new(albedo, fuzz))));
