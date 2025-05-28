@@ -33,7 +33,7 @@ impl HitRecord {
 }
 
 #[cfg(feature = "rayon")]
-pub trait Hittable: Send + Sync {
+pub trait Hittable: std::fmt::Debug + Send + Sync {
     fn hit(&self, ray: &Ray, t_range: &Range<f64>) -> Option<HitRecord>;
 }
 

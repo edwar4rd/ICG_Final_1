@@ -2,6 +2,7 @@ use crate::Rc;
 
 use crate::hittable::{HitRecord, Hittable};
 
+#[derive(Debug)]
 pub struct HittableList {
     objects: Vec<Rc<dyn Hittable>>,
 }
