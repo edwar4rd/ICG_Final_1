@@ -98,9 +98,9 @@ impl Camera {
         file: &mut T,
         world: &W,
     ) -> std::io::Result<()> {
+        let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
         writeln!(file, "P3\n{} {}", self.image_width, self.image_height)?;
         println!("255");
-        let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
         for y in 0..self.image_height {
             info!("Scanlines remaining: {}", self.image_height - y);
             for x in 0..self.image_width {
@@ -114,6 +114,47 @@ impl Camera {
         }
         info!("Done.");
         Ok(())
+    }
+
+    #[cfg(feature = "rayon")]
+    pub fn par_render<T: std::io::Write, W: Hittable>(
+        &self,
+        file: &mut T,
+        world: &W,
+    ) -> std::io::Result<()> {
+        use rayon::prelude::*;
+        let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
+        writeln!(file, "P3\n{} {}", self.image_width, self.image_height)?;
+        println!("255");
+        for y in 0..self.image_height {
+            info!("Scanlines remaining: {}", self.image_height - y);
+            for x in 0..self.image_width {
+                let color: Color = (0..self.samples_per_pixel)
+                    .into_par_iter()
+                    .map(|_| {
+                        let ray = self.get_ray(x, y);
+                        ray_color(&ray, world, self.max_depth)
+                    })
+                    .sum();
+                write_color(&mut stdout(), color * pixel_samples_scale)?;
+            }
+        }
+        info!("Done.");
+        Ok(())
+    }
+
+    #[cfg(not(feature = "rayon"))]
+    pub fn par_render<T: std::io::Write, W: Hittable>(
+        &self,
+        file: &mut T,
+        world: &W,
+    ) -> std::io::Result<()> {
+        use log::warn;
+
+        warn!(
+            "Parallel rendering (feature `rayon`) is not enabled. Falling back to single-core..."
+        );
+        self.render(file, world)
     }
 }
 

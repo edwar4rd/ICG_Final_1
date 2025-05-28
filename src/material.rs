@@ -2,6 +2,12 @@ use rand::random;
 
 use crate::{Ray, color::Color, hittable::HitRecord, near_zero, reflect, refract};
 
+#[cfg(feature = "rayon")]
+pub trait Material: std::fmt::Debug + Send + Sync {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)>;
+}
+
+#[cfg(not(feature = "rayon"))]
 pub trait Material: std::fmt::Debug {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)>;
 }

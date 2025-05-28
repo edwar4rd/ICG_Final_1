@@ -1,5 +1,5 @@
+use crate::Rc;
 use std::ops::Range;
-use std::rc::Rc;
 
 use crate::Ray;
 use crate::Vec3;
@@ -32,6 +32,12 @@ impl HitRecord {
     }
 }
 
+#[cfg(feature = "rayon")]
+pub trait Hittable: Send + Sync {
+    fn hit(&self, ray: &Ray, t_range: &Range<f64>) -> Option<HitRecord>;
+}
+
+#[cfg(not(feature = "rayon"))]
 pub trait Hittable {
     fn hit(&self, ray: &Ray, t_range: &Range<f64>) -> Option<HitRecord>;
 }

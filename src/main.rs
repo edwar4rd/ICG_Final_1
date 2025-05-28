@@ -1,12 +1,12 @@
 use icg_final_1::{
-    Point3,
+    Point3, Rc,
     camera::{Camera, CameraSettings, ImageSettings, QualitySettings},
     hittable::Hittable,
     hittable_list::HittableList,
     material::{Dielectric, Lambertian, Metal},
     sphere::Sphere,
 };
-use std::{io::stdout, rc::Rc};
+use std::io::stdout;
 
 fn main() {
     env_logger::init();
@@ -28,7 +28,7 @@ fn main() {
     };
 
     Camera::new(image_settings, quality_settings, camera_settings)
-        .render(&mut stdout(), &create_world())
+        .par_render(&mut stdout(), &create_world())
         .unwrap();
 }
 

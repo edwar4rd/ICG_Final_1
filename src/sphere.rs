@@ -1,7 +1,6 @@
-use std::rc::Rc;
-
 use crate::Point3;
 use crate::Ray;
+use crate::Rc;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 

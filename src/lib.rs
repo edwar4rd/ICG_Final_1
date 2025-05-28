@@ -73,3 +73,5 @@ pub mod hittable;
 pub mod hittable_list;
 pub mod material;
 pub mod sphere;
+
+pub use std::sync::Arc as Rc;
