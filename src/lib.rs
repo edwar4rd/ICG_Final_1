@@ -69,6 +69,7 @@ pub mod camera;
 pub mod color;
 pub mod ray;
 pub use ray::Ray;
+pub mod disk;
 pub mod hittable;
 pub mod hittable_list;
 pub mod material;
