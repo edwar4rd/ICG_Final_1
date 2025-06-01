@@ -1,18 +1,23 @@
 use icg_final_1::{
-    camera::{Camera, CameraSettings, ImageSettings, QualitySettings}, color::Color, hittable::Hittable, hittable_list::HittableList, material::{Dielectric, Lambertian, Metal}, sphere::Sphere, Point3, Rc
+    Point3, Rc, Vec3,
+    camera::{Camera, CameraSettings, ImageSettings, QualitySettings},
+    color::Color,
+    disk::Disk,
+    hittable_list::HittableList,
+    material::{Checker, Dielectric, Lambertian, Metal},
+    sphere::Sphere,
 };
+use std::env::args;
 
 fn main() {
     use rand::SeedableRng;
     env_logger::init();
-    let mut rng = rand::rngs::StdRng::seed_from_u64(0);
-
     let image_settings = ImageSettings {
         image_width: 1200,
         aspect_ratio: 16.0 / 9.0,
     };
     let quality_settings = QualitySettings {
-        samples_per_pixel: 500,
+        samples_per_pixel: 5,
         max_depth: 400,
     };
     let camera_settings = CameraSettings {
@@ -25,22 +30,27 @@ fn main() {
     };
 
     let camera = Camera::new(image_settings, quality_settings, camera_settings);
+    let mut rng = rand::rngs::StdRng::seed_from_u64(0);
+    let world = match args().nth(1).as_deref() {
+        Some("world") => create_world(&mut rng),
+        Some("world2") => create_world_2(&mut rng),
+        _ => {
+            eprintln!("Usage: cargo run [world|world2]");
+            return;
+        }
+    };
+
     #[cfg(feature = "image")]
-    camera
-        .render_to_imgbuf(&create_world(&mut rng))
-        .save("image.png")
-        .unwrap();
+    camera.render_to_imgbuf(&world).save("image.png").unwrap();
 
     #[cfg(not(feature = "image"))]
-    camera
-        .render(&mut std::io::stdout(), &create_world())
-        .unwrap();
+    camera.render(&mut std::io::stdout(), &world).unwrap();
 }
 
-fn create_world(rng: &mut impl rand::Rng) -> impl Hittable {
+fn create_world(rng: &mut impl rand::Rng) -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
+    let ground_material = Checker {};
     world.push(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -113,12 +123,26 @@ fn create_world(rng: &mut impl rand::Rng) -> impl Hittable {
         Rc::new(portal_right_material),
     ));
 
-    add_blackhole(Point3::new(8.0, 1.0, 0.0), &mut world);
+    add_blackhole(Point3::new(8.0, 1.0, 0.0), &mut world, 1.0);
 
     world
 }
 
-fn add_blackhole(position: Point3, world: &mut HittableList) {
+fn create_world_2(_rng: &mut impl rand::Rng) -> HittableList {
+    let mut world = HittableList::new();
+
+    add_blackhole(Point3::new(0.0, 0.0, 0.0), &mut world, 3.0);
+    world.push(Disk::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.21),
+        4.0,
+        Rc::new(Checker::new()),
+    ));
+
+    world
+}
+
+fn add_blackhole(position: Point3, world: &mut HittableList, scale: f64) {
     use icg_final_1::material::{Black, BlackHoleLayer};
     const LAYER_COUNT: usize = 64;
 
@@ -126,7 +150,7 @@ fn add_blackhole(position: Point3, world: &mut HittableList) {
         let radius = (layer_index as f64 / (LAYER_COUNT as f64 / 4.25)).powf(2.5) + 1.0;
         world.push(Sphere::new(
             position,
-            radius / 40.0,
+            radius / 40.0 * scale,
             Rc::new(BlackHoleLayer::new(radius, LAYER_COUNT as f64)),
         ));
     }
