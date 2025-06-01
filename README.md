@@ -7,7 +7,7 @@ This repository contains an implementation of a simple ray tracer in Rust, follo
 ## Features
 
 - Basic path tracing engine
-- Sphere and only spheres
+- Sphere and ~~only spheres~~ disks!
 - Diffuse and reflective materials
 
 ## My Custom Features
@@ -15,6 +15,7 @@ This repository contains an implementation of a simple ray tracer in Rust, follo
 - Parallel rendering with Rayon (`--features rayon`)
 - Output to png with the Image crate (`--features image`)
 - "Portal" material that teleports the ray
+- "Blackhole" material that bends the light
 
 ## Getting Started
 
@@ -30,11 +31,10 @@ Use the `--release` flag (and maybe also lower the sample count per pixel) or yo
 ```bash
 git clone https://github.com/edwar4rd/ICG_Final_1
 cd ICG_Final_1
-cargo run --release
+cargo run --release world
 ```
 
 The output image will be saved as `image.png`.
-Use something like `ffmpeg` to turn that to something more portable.
 
 ## Credits
 
@@ -44,6 +44,7 @@ Use something like `ffmpeg` to turn that to something more portable.
 ## Reference
 
 - [_Ray Tracing in One Weekend_](https://raytracing.github.io/books/RayTracingInOneWeekend.html) by Peter Shirley
+- [Create Realistic Black Holes in Blender | Full Tutorial](https://www.youtube.com/watch?v=XWv1Ajc3tfU&t=1870s) (video) by Alaskan FX
 
 ## License
 
