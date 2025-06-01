@@ -17,7 +17,7 @@ fn main() {
         aspect_ratio: 16.0 / 9.0,
     };
     let quality_settings = QualitySettings {
-        samples_per_pixel: 5,
+        samples_per_pixel: 500,
         max_depth: 400,
     };
     let camera_settings = CameraSettings {
