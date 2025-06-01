@@ -159,6 +159,12 @@ impl Material for Portal {
 #[derive(Debug, Clone, Copy)]
 pub struct Black;
 
+impl Default for Black {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Black {
     pub fn new() -> Self {
         Black {}
@@ -179,10 +185,14 @@ pub struct BlackHoleLayer {
 impl BlackHoleLayer {
     pub fn new(radius: f64, layer_count: f64) -> Self {
         let pre_mult = (radius - 1.4).max(0.0001).powf(-0.5) / layer_count * 2.8;
-        debug_assert!(pre_mult.is_finite(), "Invalid pre_mult value: {}, from r = {}, layer_count = {}", pre_mult, radius, layer_count);
-        BlackHoleLayer {
-            pre_mult
-        }
+        debug_assert!(
+            pre_mult.is_finite(),
+            "Invalid pre_mult value: {}, from r = {}, layer_count = {}",
+            pre_mult,
+            radius,
+            layer_count
+        );
+        BlackHoleLayer { pre_mult }
     }
 }
 
@@ -231,7 +241,44 @@ impl Material for BlackHoleLayer {
         debug_assert!(direction.x.is_finite());
         debug_assert!(direction.y.is_finite());
         debug_assert!(direction.z.is_finite());
-        
+
         Some((Color::new(1.0, 1.0, 1.0), scattered))
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Checker {}
+
+impl Default for Checker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Checker {
+    pub fn new() -> Self {
+        Checker {}
+    }
+}
+
+impl Material for Checker {
+    fn scatter(&self, _ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
+        let mut scatter_dir = hit_record.normal + crate::random_unit_vec3();
+        if near_zero(&scatter_dir) {
+            scatter_dir = hit_record.normal;
+        }
+        let scattered = Ray::new(hit_record.p, scatter_dir);
+        let scale = 2.73;
+        let x = (hit_record.p.x * scale).floor() as i32;
+        let y = (hit_record.p.y * scale).floor() as i32;
+        let z = (hit_record.p.z * scale).floor() as i32;
+        let color = (x + y + z) % 2;
+        let color = if color == 0 {
+            Color::new(0.2, 0.2, 0.2)
+        } else {
+            Color::new(0.8, 0.8, 0.8)
+        };
+
+        Some((color, scattered))
     }
 }
