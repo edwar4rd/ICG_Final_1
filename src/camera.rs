@@ -130,7 +130,19 @@ impl Camera {
         world: &W,
     ) -> image::ImageBuffer<image::Rgb<u8>, Vec<u8>> {
         #[cfg(feature = "rayon")]
+        use indicatif::ParallelProgressIterator;
+        #[cfg(not(feature = "rayon"))]
+        use indicatif::ProgressIterator;
+        #[cfg(feature = "rayon")]
         use rayon::prelude::*;
+
+        use indicatif::{ProgressFinish, ProgressStyle};
+        let progress_style = ProgressStyle::with_template(
+            "[{elapsed_precise}/{duration_precise}] {bar:80.green/white} {pos:>7}/{len:7} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-");
+
         let pixel_samples_scale = (self.samples_per_pixel as f64).recip();
         let mut imgbuf = image::ImageBuffer::new(self.image_width as u32, self.image_height as u32);
         #[cfg(feature = "rayon")]
@@ -138,20 +150,23 @@ impl Camera {
         #[cfg(not(feature = "rayon"))]
         let pixel_iter = imgbuf.enumerate_pixels_mut();
 
-        pixel_iter.for_each(|(x, y, pixel)| {
-            let sample_iter = 0..self.samples_per_pixel;
+        pixel_iter
+            .progress_with_style(progress_style)
+            .with_finish(ProgressFinish::AndLeave)
+            .for_each(|(x, y, pixel)| {
+                let sample_iter = 0..self.samples_per_pixel;
 
-            let color: Color = sample_iter
-                .map(|_| {
-                    let ray = self.get_ray(x as usize, y as usize);
-                    let color = ray_color(&ray, world, self.max_depth);
-                    debug_assert!(color.x >= 0.0 && color.y >= 0.0 && color.z >= 0.0);
-                    Color::new(color.x.max(0.0), color.y.max(0.0), color.z.max(0.0))
-                })
-                .sum();
-            let (r, g, b) = crate::color::color_to_rgb(color * pixel_samples_scale);
-            *pixel = image::Rgb([r, g, b]);
-        });
+                let color: Color = sample_iter
+                    .map(|_| {
+                        let ray = self.get_ray(x as usize, y as usize);
+                        let color = ray_color(&ray, world, self.max_depth);
+                        debug_assert!(color.x >= 0.0 && color.y >= 0.0 && color.z >= 0.0);
+                        Color::new(color.x.max(0.0), color.y.max(0.0), color.z.max(0.0))
+                    })
+                    .sum();
+                let (r, g, b) = crate::color::color_to_rgb(color * pixel_samples_scale);
+                *pixel = image::Rgb([r, g, b]);
+            });
         info!("Done.");
         imgbuf
     }
