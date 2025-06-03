@@ -38,6 +38,6 @@ pub trait Hittable: std::fmt::Debug + Send + Sync {
 }
 
 #[cfg(not(feature = "rayon"))]
-pub trait Hittable {
+pub trait Hittable: std::fmt::Debug {
     fn hit(&self, ray: &Ray, t_range: &Range<f64>) -> Option<HitRecord>;
 }
