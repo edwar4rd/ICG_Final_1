@@ -156,17 +156,17 @@ fn create_world_3(_rng: &mut impl rand::Rng) -> HittableList {
         Rc::new(ground_material),
     ));
 
-    let under_ground_material = Lambertian::new(Color::new(0.1, 0.1, 0.8));
+    let other_ground_material = Lambertian::new(Color::new(0.1, 0.1, 0.8));
     world.push(Disk::new(
-        Point3::new(0.0, -1000.0, 0.0),
+        Point3::new(10000.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0),
         1000.0,
-        Rc::new(under_ground_material),
+        Rc::new(other_ground_material),
     ));
 
     let portal_radius = 0.04;
     let portal_left_pos = Point3::new(-4.0, 1.0, 0.0);
-    let portal_right_pos = Point3::new(-4.0, -999.0, 0.0);
+    let portal_right_pos = Point3::new(10000.0, 1.0, 0.0);
 
     let (portal_left_material, portal_right_material) = icg_final_1::material::Portal::new_pair(
         portal_radius,
