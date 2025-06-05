@@ -107,6 +107,7 @@ fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Portal {
+    radius: f64,
     albedo: Color,
     portal_position: crate::Point3,
     target_position: crate::Point3,
@@ -114,11 +115,13 @@ pub struct Portal {
 
 impl Portal {
     pub fn new(
+        radius: f64,
         albedo: Color,
         portal_position: crate::Point3,
         target_position: crate::Point3,
     ) -> Self {
         Portal {
+            radius,
             albedo,
             portal_position,
             target_position,
@@ -126,30 +129,37 @@ impl Portal {
     }
 
     pub fn new_pair(
+        radius: f64,
         albedo_a: Color,
         albedo_b: Color,
         pos_a: crate::Point3,
         pos_b: crate::Point3,
     ) -> (Self, Self) {
         (
-            Portal::new(albedo_a, pos_a, pos_b),
-            Portal::new(albedo_b, pos_b, pos_a),
+            Portal::new(radius, albedo_a, pos_a, pos_b),
+            Portal::new(radius, albedo_b, pos_b, pos_a),
         )
     }
 }
 
 impl Material for Portal {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
-        if hit_record.front_face {
-            // The ray is entering the portal
-            return Some((
-                Color::new(1.0, 1.0, 1.0),
-                Ray::new(hit_record.p, ray_in.direction()),
-            ));
-        }
+        // Simulate a portal by after traveling the portal then redirecting the ray to the target position
+        use crate::hittable::Hittable;
+        let sphere = crate::sphere::Sphere::new(
+            self.portal_position,
+            self.radius,
+            crate::Rc::new(Black::new()),
+        );
+        let new_ray = Ray::new(hit_record.p, ray_in.direction());
+        let out_rec = sphere.hit(&new_ray, &(0.001..f64::INFINITY));
+        let out_pos = match out_rec {
+            Some(rec) => rec.p,
+            None => return None, // Ray did not hit the portal
+        };
 
         let scattered = Ray::new(
-            self.target_position + (hit_record.p - self.portal_position),
+            self.target_position + (out_pos - self.portal_position),
             ray_in.direction(),
         );
         Some((self.albedo, scattered))
