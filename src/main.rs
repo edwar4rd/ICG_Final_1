@@ -17,13 +17,13 @@ fn main() {
         aspect_ratio: 16.0 / 9.0,
     };
     let quality_settings = QualitySettings {
-        samples_per_pixel: 50,
+        samples_per_pixel: 500,
         max_depth: 400,
     };
     let camera_settings = CameraSettings {
         vfov: 20.0,
         focus_dist: 10.0,
-        defocus_angle: 0.0,
+        defocus_angle: 0.6,
         camera_center: Point3::new(15.0, 2.0, 3.0),
         camera_lookat: Point3::new(0.0, 0.0, 0.0),
         camera_vup: Point3::new(0.0, 1.0, 0.0),
