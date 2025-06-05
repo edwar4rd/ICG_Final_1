@@ -27,6 +27,7 @@ This repository contains an implementation of a simple ray tracer in Rust, follo
 ### Build & Run
 
 Use the `--release` flag (and maybe also lower the sample count per pixel) or you'll wait ages.
+There are three worlds available to render: `world`, `world2`, `world3`.
 
 ```bash
 git clone https://github.com/edwar4rd/ICG_Final_1

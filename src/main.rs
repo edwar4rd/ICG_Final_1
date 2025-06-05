@@ -17,13 +17,13 @@ fn main() {
         aspect_ratio: 16.0 / 9.0,
     };
     let quality_settings = QualitySettings {
-        samples_per_pixel: 500,
+        samples_per_pixel: 50,
         max_depth: 400,
     };
     let camera_settings = CameraSettings {
         vfov: 20.0,
         focus_dist: 10.0,
-        defocus_angle: 0.6,
+        defocus_angle: 0.0,
         camera_center: Point3::new(15.0, 2.0, 3.0),
         camera_lookat: Point3::new(0.0, 0.0, 0.0),
         camera_vup: Point3::new(0.0, 1.0, 0.0),
@@ -34,8 +34,9 @@ fn main() {
     let world = match args().nth(1).as_deref() {
         Some("world") => create_world(&mut rng),
         Some("world2") => create_world_2(&mut rng),
+        Some("world3") => create_world_3(&mut rng),
         _ => {
-            eprintln!("Usage: cargo run [world|world2]");
+            eprintln!("Usage: cargo run [world|world2|world3]");
             return;
         }
     };
@@ -140,6 +141,55 @@ fn create_world_2(_rng: &mut impl rand::Rng) -> HittableList {
         4.0,
         Rc::new(Checker::new()),
     ));
+
+    world
+}
+
+fn create_world_3(_rng: &mut impl rand::Rng) -> HittableList {
+    let mut world = HittableList::new();
+
+    let ground_material = Checker {};
+    world.push(Disk::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        1000.0,
+        Rc::new(ground_material),
+    ));
+
+    let under_ground_material = Lambertian::new(Color::new(0.1, 0.1, 0.8));
+    world.push(Disk::new(
+        Point3::new(0.0, -1000.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        1000.0,
+        Rc::new(under_ground_material),
+    ));
+
+    let portal_radius = 0.04;
+    let portal_left_pos = Point3::new(-4.0, 1.0, 0.0);
+    let portal_right_pos = Point3::new(-4.0, -999.0, 0.0);
+
+    let (portal_left_material, portal_right_material) = icg_final_1::material::Portal::new_pair(
+        portal_radius,
+        Color::new(1.0, 1.0, 1.0),
+        Color::new(1.0, 1.0, 1.0),
+        portal_left_pos,
+        portal_right_pos,
+    );
+
+    world.push(Sphere::new(
+        portal_left_pos,
+        portal_radius,
+        Rc::new(portal_left_material),
+    ));
+
+    world.push(Sphere::new(
+        portal_right_pos,
+        portal_radius,
+        Rc::new(portal_right_material),
+    ));
+
+    add_blackhole(portal_left_pos, &mut world, 1.0);
+    add_blackhole(portal_right_pos, &mut world, 1.0);
 
     world
 }
